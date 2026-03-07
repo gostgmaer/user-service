@@ -1,0 +1,13 @@
+.dockerignore
+node_modules/
+coverage/
+logs/
+.git/
+.gitignore
+*.md
+.env
+.env.*
+!.env.example
+docker-compose*.yml
+Dockerfile*
+jest.config.js

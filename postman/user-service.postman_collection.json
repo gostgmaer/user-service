@@ -1,0 +1,1463 @@
+{
+  "info": {
+    "_postman_id": "user-service-api-v1",
+    "name": "User Service",
+    "description": "Complete API collection for the User Microservice (default port 3501).\n\n**Variables to configure:**\n| Variable | Description |\n|---|---|\n| `baseUrl` | `http://localhost:3501` |\n| `token` | JWT access token from auth-service |\n| `userId` | Target user MongoDB ObjectId |\n| `addressId` | Target address MongoDB ObjectId |\n\n**Auth:** All protected routes use `Authorization: Bearer {{token}}`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",   "value": "http://localhost:3501",          "type": "string" },
+    { "key": "token",     "value": "",                               "type": "string" },
+    { "key": "userId",    "value": "507f1f77bcf86cd799439011",       "type": "string" },
+    { "key": "addressId", "value": "507f1f77bcf86cd799439012",       "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Liveness probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health/live", "host": ["{{baseUrl}}"], "path": ["health", "live"] }
+          }
+        },
+        {
+          "name": "Readiness probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health/ready", "host": ["{{baseUrl}}"], "path": ["health", "ready"] }
+          }
+        },
+        {
+          "name": "Full health report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          }
+        },
+        {
+          "name": "Prometheus metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/metrics", "host": ["{{baseUrl}}"], "path": ["metrics"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Registration — Public",
+      "description": "No authentication required.",
+      "item": [
+        {
+          "name": "Self-register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@example.com\",\n  \"password\": \"SecurePass1!\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Doe\",\n  \"username\": \"jane_doe\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/register", "host": ["{{baseUrl}}"], "path": ["api", "users", "register"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Core",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"],
+              "query": [
+                { "key": "page",      "value": "1" },
+                { "key": "limit",     "value": "20" },
+                { "key": "status",    "value": "active",    "disabled": true },
+                { "key": "role",      "value": "customer",  "disabled": true },
+                { "key": "search",    "value": "john",      "disabled": true },
+                { "key": "sortBy",    "value": "createdAt", "disabled": true },
+                { "key": "sortOrder", "value": "desc",      "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Admin create user (no password)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"username\": \"john_smith\",\n  \"role\": \"customer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users", "host": ["{{baseUrl}}"], "path": ["api", "users"] }
+          }
+        },
+        {
+          "name": "Get user by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Full update user (PUT)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"phoneNumber\": \"+15550001234\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Partial update user (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Johnny\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Delete user",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Profile",
+      "item": [
+        {
+          "name": "Get my profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/profile", "host": ["{{baseUrl}}"], "path": ["api", "users", "profile"] }
+          }
+        },
+        {
+          "name": "Update profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Smith\",\n  \"bio\": \"Software developer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/profile", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "profile"] }
+          }
+        },
+        {
+          "name": "Update profile picture",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://cdn.example.com/avatars/john.jpg\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/profile/picture", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "profile", "picture"] }
+          }
+        },
+        {
+          "name": "Change email",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new.email@example.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/profile/email", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "profile", "email"] }
+          }
+        },
+        {
+          "name": "Change phone number",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"+15550009876\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/profile/phone", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "profile", "phone"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Authentication",
+      "description": "change-password / reset-password / confirm-email belong to auth-service.",
+      "item": [
+        {
+          "name": "Force-verify user (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/authentication/verify", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "authentication", "verify"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Account Status",
+      "item": [
+        {
+          "name": "Set status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "status"] }
+          }
+        },
+        {
+          "name": "Lock account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"durationMinutes\": 60,\n  \"reason\": \"Suspicious activity\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/lock", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "lock"] }
+          }
+        },
+        {
+          "name": "Unlock account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/unlock", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "unlock"] }
+          }
+        },
+        {
+          "name": "Deactivate account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/deactivate-account", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "deactivate-account"] }
+          }
+        },
+        {
+          "name": "Reactivate account",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/reactivate-account", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "reactivate-account"] }
+          }
+        },
+        {
+          "name": "Activate (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/activate", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "activate"] }
+          }
+        },
+        {
+          "name": "Deactivate (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "deactivate"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Roles",
+      "item": [
+        {
+          "name": "Assign role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/role", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "role"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Preferences",
+      "item": [
+        {
+          "name": "Update all preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"dark\",\n  \"language\": \"en\",\n  \"newsletter\": true,\n  \"notifications\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/preferences", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "preferences"] }
+          }
+        },
+        {
+          "name": "Toggle newsletter",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/preferences/newsletter", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "preferences", "newsletter"] }
+          }
+        },
+        {
+          "name": "Toggle notifications",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/preferences/notifications", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "preferences", "notifications"] }
+          }
+        },
+        {
+          "name": "Set theme",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"theme\": \"dark\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/preferences/theme", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "preferences", "theme"] }
+          }
+        },
+        {
+          "name": "Set language",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"language\": \"en\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/preferences/language", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "preferences", "language"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Subscription",
+      "item": [
+        {
+          "name": "Update subscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionType\": \"premium\",\n  \"subscriptionStatus\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/subscription", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "subscription"] }
+          }
+        },
+        {
+          "name": "Cancel subscription",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/subscription", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "subscription"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Loyalty",
+      "item": [
+        {
+          "name": "Add loyalty points",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/loyalty/add", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "loyalty", "add"] }
+          }
+        },
+        {
+          "name": "Redeem loyalty points",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"points\": 50\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/loyalty/redeem", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "loyalty", "redeem"] }
+          }
+        },
+        {
+          "name": "Transfer loyalty points",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toUserId\": \"507f1f77bcf86cd799439020\",\n  \"points\": 25\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/loyalty/transfer", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "loyalty", "transfer"] }
+          }
+        },
+        {
+          "name": "Reset loyalty points",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/loyalty/reset", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "loyalty", "reset"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Interests",
+      "item": [
+        {
+          "name": "Add interest",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interest\": \"technology\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/interests", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "interests"] }
+          }
+        },
+        {
+          "name": "Remove interest",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"interest\": \"technology\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/interests", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "interests"] }
+          }
+        },
+        {
+          "name": "Add interest category",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category\": \"tech\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/interests/category", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "interests", "category"] }
+          }
+        },
+        {
+          "name": "Clear all interests",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/interests/clear", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "interests", "clear"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Favorites",
+      "item": [
+        {
+          "name": "Add favourite product",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"507f1f77bcf86cd799439030\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/favorites", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "favorites"] }
+          }
+        },
+        {
+          "name": "Remove favourite product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"507f1f77bcf86cd799439030\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/favorites", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "favorites"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Addresses",
+      "item": [
+        {
+          "name": "Add address",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"123 Main Street\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"postalCode\": \"10001\",\n  \"country\": \"US\",\n  \"isDefault\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "addresses"] }
+          }
+        },
+        {
+          "name": "Update address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"city\": \"Boston\",\n  \"state\": \"MA\",\n  \"postalCode\": \"02101\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addressId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "addresses", "{{addressId}}"] }
+          }
+        },
+        {
+          "name": "Delete address",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addressId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "addresses", "{{addressId}}"] }
+          }
+        },
+        {
+          "name": "Set default address",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/addresses/{{addressId}}/default", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "addresses", "{{addressId}}", "default"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Sessions & Security",
+      "item": [
+        {
+          "name": "Get security info",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/security", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "security"] }
+          }
+        },
+        {
+          "name": "Get active sessions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/sessions", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "sessions"] }
+          }
+        },
+        {
+          "name": "Get trusted devices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/devices/trusted", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "devices", "trusted"] }
+          }
+        },
+        {
+          "name": "Get known devices",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/devices/known", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "devices", "known"] }
+          }
+        },
+        {
+          "name": "Get login history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/login-history", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "login-history"] }
+          }
+        },
+        {
+          "name": "Get security logs",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/security/logs", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "security", "logs"] }
+          }
+        },
+        {
+          "name": "Invalidate all sessions",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/sessions/invalidate-all", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "sessions", "invalidate-all"] }
+          }
+        },
+        {
+          "name": "Revoke specific token",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"<refresh_token_to_revoke>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/sessions/revoke-token", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "sessions", "revoke-token"] }
+          }
+        },
+        {
+          "name": "Update login timestamp",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/login-timestamp", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "login-timestamp"] }
+          }
+        },
+        {
+          "name": "Increment failed logins",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/failed-logins/increment", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "failed-logins", "increment"] }
+          }
+        },
+        {
+          "name": "Reset failed logins",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/failed-logins/reset", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "failed-logins", "reset"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Social Media",
+      "item": [
+        {
+          "name": "Get social accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/social", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "social"] }
+          }
+        },
+        {
+          "name": "Update social media URLs",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"facebook\": \"https://facebook.com/johndoe\",\n  \"twitter\": \"https://twitter.com/johndoe\",\n  \"linkedin\": \"https://linkedin.com/in/johndoe\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/social-media", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "social-media"] }
+          }
+        },
+        {
+          "name": "Link social provider",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"google\",\n  \"socialId\": \"google-oauth2-uid-123456\",\n  \"email\": \"john@gmail.com\",\n  \"displayName\": \"John Doe\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/social-media/link", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "social-media", "link"] }
+          }
+        },
+        {
+          "name": "Unlink social provider",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"google\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/social-media/unlink", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "social-media", "unlink"] }
+          }
+        },
+        {
+          "name": "Clear all social links",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/social-media/clear", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "social-media", "clear"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Reporting",
+      "item": [
+        {
+          "name": "User statistics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/statistics", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "statistics"] }
+          }
+        },
+        {
+          "name": "Full user report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/report", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "report"] }
+          }
+        },
+        {
+          "name": "Activity summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/activity-summary", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "activity-summary"] }
+          }
+        },
+        {
+          "name": "Dynamic field update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"field\": \"firstName\",\n  \"value\": \"Johnny\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/dynamic-update", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "dynamic-update"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users — Notifications",
+      "item": [
+        {
+          "name": "Send notification to user",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Order Shipped\",\n  \"message\": \"Your order #12345 has been shipped.\",\n  \"type\": \"order\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/{{userId}}/notify", "host": ["{{baseUrl}}"], "path": ["api", "users", "{{userId}}", "notify"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Search & Filters",
+      "item": [
+        {
+          "name": "Full-text search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/search?q=john",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "search"],
+              "query": [{ "key": "q", "value": "john" }]
+            }
+          }
+        },
+        {
+          "name": "Search by email or username",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/search/email-username?q=john",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "search", "email-username"],
+              "query": [{ "key": "q", "value": "john" }]
+            }
+          }
+        },
+        {
+          "name": "Dynamic field search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/search/dynamic?field=firstName&value=John",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "search", "dynamic"],
+              "query": [
+                { "key": "field", "value": "firstName" },
+                { "key": "value", "value": "John" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Advanced search",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/advanced-search?status=active&role=customer&page=1&limit=20",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "advanced-search"],
+              "query": [
+                { "key": "status", "value": "active" },
+                { "key": "role",   "value": "customer" },
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lookup by email",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/by-email/john@example.com", "host": ["{{baseUrl}}"], "path": ["api", "users", "by-email", "john@example.com"] }
+          }
+        },
+        {
+          "name": "Lookup by username",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/by-username/john_doe", "host": ["{{baseUrl}}"], "path": ["api", "users", "by-username", "john_doe"] }
+          }
+        },
+        {
+          "name": "Filter by status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/status?status=active",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "status"],
+              "query": [{ "key": "status", "value": "active" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — active only",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/active", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "active"] }
+          }
+        },
+        {
+          "name": "Filter — verified only",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/verified", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "verified"] }
+          }
+        },
+        {
+          "name": "Filter by role",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/role?role=admin",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "role"],
+              "query": [{ "key": "role", "value": "admin" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — admins",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/admins", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "admins"] }
+          }
+        },
+        {
+          "name": "Filter — customers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/customers", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "customers"] }
+          }
+        },
+        {
+          "name": "Filter by subscription type",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/subscription?subscriptionType=premium",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "subscription"],
+              "query": [{ "key": "subscriptionType", "value": "premium" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — active within N days",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/active-within-days?days=30",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "active-within-days"],
+              "query": [{ "key": "days", "value": "30" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — top loyal users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/top-loyal?limit=10",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "top-loyal"],
+              "query": [{ "key": "limit", "value": "10" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — never logged in",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/never-logged-in", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "never-logged-in"] }
+          }
+        },
+        {
+          "name": "Filter — oldest user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/oldest", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "oldest"] }
+          }
+        },
+        {
+          "name": "Filter — users with failed logins",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/filter/failed-logins?threshold=5",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "failed-logins"],
+              "query": [{ "key": "threshold", "value": "5" }]
+            }
+          }
+        },
+        {
+          "name": "Filter — incomplete profiles",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/filter/incomplete-profiles", "host": ["{{baseUrl}}"], "path": ["api", "users", "filter", "incomplete-profiles"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk delete",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    \"507f1f77bcf86cd799439011\",\n    \"507f1f77bcf86cd799439013\"\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/bulk", "host": ["{{baseUrl}}"], "path": ["api", "users", "bulk"] }
+          }
+        },
+        {
+          "name": "Bulk field update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"507f1f77bcf86cd799439011\"],\n  \"update\": { \"subscriptionStatus\": \"inactive\" }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/bulk", "host": ["{{baseUrl}}"], "path": ["api", "users", "bulk"] }
+          }
+        },
+        {
+          "name": "Bulk status change",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"507f1f77bcf86cd799439011\"],\n  \"status\": \"active\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/bulk/status", "host": ["{{baseUrl}}"], "path": ["api", "users", "bulk", "status"] }
+          }
+        },
+        {
+          "name": "Bulk role assignment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"507f1f77bcf86cd799439011\"],\n  \"role\": \"customer\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/bulk/update-role", "host": ["{{baseUrl}}"], "path": ["api", "users", "bulk", "update-role"] }
+          }
+        },
+        {
+          "name": "Bulk add loyalty points",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"507f1f77bcf86cd799439011\"],\n  \"points\": 50\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/bulk/add-loyalty-points", "host": ["{{baseUrl}}"], "path": ["api", "users", "bulk", "add-loyalty-points"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Summary statistics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/stats-data", "host": ["{{baseUrl}}"], "path": ["api", "users", "stats-data"] }
+          }
+        },
+        {
+          "name": "Dashboard analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics"] }
+          }
+        },
+        {
+          "name": "Count by role",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/count-by-role", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "count-by-role"] }
+          }
+        },
+        {
+          "name": "Count by subscription",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/count-by-subscription", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "count-by-subscription"] }
+          }
+        },
+        {
+          "name": "Count by country",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/count-by-country", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "count-by-country"] }
+          }
+        },
+        {
+          "name": "Average loyalty points",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/average-loyalty-points", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "average-loyalty-points"] }
+          }
+        },
+        {
+          "name": "Average orders per user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/average-orders", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "average-orders"] }
+          }
+        },
+        {
+          "name": "Loyalty brackets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/loyalty-brackets", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "loyalty-brackets"] }
+          }
+        },
+        {
+          "name": "Top interests",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/top-interests", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "top-interests"] }
+          }
+        },
+        {
+          "name": "Registrations over time",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/registrations-over-time", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "registrations-over-time"] }
+          }
+        },
+        {
+          "name": "Login activity over time",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/login-activity-over-time", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "login-activity-over-time"] }
+          }
+        },
+        {
+          "name": "Table statistics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/table-statistics", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "table-statistics"] }
+          }
+        },
+        {
+          "name": "Table report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/table-report", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "table-report"] }
+          }
+        },
+        {
+          "name": "Per-user analytics report",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/user-report/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "user-report", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Per-user activity summary (analytics)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/activity-summary/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "activity-summary", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Users with analytics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/users-with-analytics", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "users-with-analytics"] }
+          }
+        },
+        {
+          "name": "User engagement metrics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/analytics/user-engagement", "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "user-engagement"] }
+          }
+        },
+        {
+          "name": "All stats (combined)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/analytics/all-stats?trendDays=30&interestLimit=10&topUsersLimit=5",
+              "host": ["{{baseUrl}}"], "path": ["api", "users", "analytics", "all-stats"],
+              "query": [
+                { "key": "trendDays",      "value": "30" },
+                { "key": "interestLimit",  "value": "10" },
+                { "key": "topUsersLimit",  "value": "5" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Export / Import",
+      "item": [
+        {
+          "name": "Export data (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/export/data", "host": ["{{baseUrl}}"], "path": ["api", "users", "export", "data"] }
+          }
+        },
+        {
+          "name": "Export statistics (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/export/statistics", "host": ["{{baseUrl}}"], "path": ["api", "users", "export", "statistics"] }
+          }
+        },
+        {
+          "name": "Export CSV",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/users/export/csv", "host": ["{{baseUrl}}"], "path": ["api", "users", "export", "csv"] }
+          }
+        },
+        {
+          "name": "Import from JSON array (upsert)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"users\": [\n    {\n      \"email\": \"user1@example.com\",\n      \"firstName\": \"Alice\",\n      \"lastName\": \"Smith\",\n      \"password\": \"TempPass1!\"\n    },\n    {\n      \"email\": \"user2@example.com\",\n      \"firstName\": \"Bob\",\n      \"lastName\": \"Jones\",\n      \"password\": \"TempPass2!\"\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/import/data", "host": ["{{baseUrl}}"], "path": ["api", "users", "import", "data"] }
+          }
+        },
+        {
+          "name": "Import from CSV text",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"csv\": \"email,firstName,lastName\\nuser1@example.com,Alice,Smith\\nuser2@example.com,Bob,Jones\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/api/users/import/csv", "host": ["{{baseUrl}}"], "path": ["api", "users", "import", "csv"] }
+          }
+        }
+      ]
+    }
+
+  ]
+}

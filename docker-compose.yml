@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  user-service:
+    build:
+      context: .
+      target: production
+    image: user-service:local
+    container_name: user-service
+    restart: unless-stopped
+    ports:
+      - "3501:3501"
+    environment:
+      NODE_ENV:               development
+      PORT:                   3501
+      MONGO_URI:              mongodb://mongo:27017/userdb
+      REDIS_URL:              redis://redis:6379
+      JWT_ACCESS_SECRET:      dev_access_secret_at_least_32_chars_here
+      JWT_REFRESH_SECRET:     dev_refresh_secret_at_least_32_chars_here
+      JWT_ID_SECRET:          dev_id_secret_at_least_32_characters_here
+      JWT_ACCESS_EXPIRY:      15m
+      JWT_REFRESH_EXPIRY:     7d
+      JWT_ISSUER:             dev-issuer
+      JWT_AUDIENCE:           dev-audience
+      CORS_ORIGIN:            http://localhost:3000
+      SERVICE_API_KEY:        dev-service-key
+      ALLOWED_SERVICE_API_KEYS: dev-allowed-key
+      BCRYPT_ROUNDS:          10
+      LOG_LEVEL:              info
+      LOG_FORMAT:             pretty
+      RATE_LIMIT_MAX_REQUESTS: 1000
+      BULK_RATE_LIMIT_MAX:    20
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3501/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - app-network
+    volumes:
+      - ./logs:/app/logs
+
+  mongo:
+    image: mongo:7
+    container_name: user-service-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: userdb
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/userdb --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: user-service-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--loglevel", "warning"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app-network
+
+volumes:
+  mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
