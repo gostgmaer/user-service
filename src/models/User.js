@@ -1,5 +1,5 @@
 // src/models/User.js
-// Comprehensive User schema â€” shared with auth service (same DB, same collection).
+// Comprehensive User schema � shared with auth service (same DB, same collection).
 // This model is the single source of truth for the users collection.
 'use strict';
 
@@ -15,15 +15,15 @@ const LOCK_WINDOW_MS = 30 * 60 * 1000;
 
 const userSchema = new mongoose.Schema(
   {
-    // â”€â”€ Multi-tenancy â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Multi-tenancy -----------------------------------------------------
     tenantId: { type: String, required: true, index: true },
 
-    // â”€â”€ Identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Identity ---------------------------------------------------------
     username:      { type: String, required: true, trim: true, minlength: 3, maxlength: 30 },
     email:         { type: String, required: true, lowercase: true, trim: true },
     hash_password: { type: String, default: null },
 
-    // â”€â”€ Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Profile -----------------------------------------------------------
     firstName:   { type: String, trim: true, default: null },
     lastName:    { type: String, trim: true, default: null },
     dateOfBirth: { type: Date, default: null },
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
       type: { type: String, default: null },
     },
 
-    // â”€â”€ Status & Role â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Status & Role -----------------------------------------------------
     role:        { type: mongoose.Schema.Types.ObjectId, ref: 'Role', default: null },
     permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Permission' }],
     isActive: { type: Boolean, default: true },
@@ -52,20 +52,20 @@ const userSchema = new mongoose.Schema(
       default: 'pending',
     },
 
-    // â”€â”€ Audit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Audit -------------------------------------------------------------
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     updated_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     deleted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     deletedAt:  { type: Date, default: null },
 
-    // â”€â”€ Verification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Verification ------------------------------------------------------
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
     isVerified:    { type: Boolean, default: false },
     emailVerificationToken:       { type: String, default: null },
     emailVerificationTokenExpiry: { type: Date,   default: null },
 
-    // â”€â”€ Password Reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Password Reset ----------------------------------------------------
     passwordReset: {
       token:       { type: String, default: null },
       tokenExpiry: { type: Date,   default: null },
@@ -73,13 +73,13 @@ const userSchema = new mongoose.Schema(
       lastAttempt: { type: Date,   default: null },
     },
 
-    // â”€â”€ Account Unlock â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Account Unlock ----------------------------------------------------
     unlockToken: {
       token:       { type: String, default: null },
       tokenExpiry: { type: Date,   default: null },
     },
 
-    // â”€â”€ Login Security â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Login Security ----------------------------------------------------
     loginSecurity: {
       failedAttempts:             { type: Number,  default: 0 },
       lockedUntil:                { type: Date,    default: null },
@@ -105,7 +105,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // â”€â”€ Sessions & Tokens â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Sessions & Tokens -------------------------------------------------
     activeSessions: [
       {
         sessionId:  { type: String, required: true },
@@ -128,7 +128,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // â”€â”€ OTP / 2FA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- OTP / 2FA ---------------------------------------------------------
     currentOTP: {
       code:        { type: String,  default: null },
       hashedCode:  { type: String,  default: null },
@@ -155,7 +155,7 @@ const userSchema = new mongoose.Schema(
       lastUsed:       { type: Date,    default: null },
     },
 
-    // â”€â”€ Devices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Devices -----------------------------------------------------------
     knownDevices: [
       {
         deviceId:    { type: String,  required: true },
@@ -173,7 +173,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // â”€â”€ Social Accounts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Social Accounts ---------------------------------------------------
     socialAccounts: [
       {
         provider:    { type: String, required: true },
@@ -194,7 +194,7 @@ const userSchema = new mongoose.Schema(
       pinterest: { type: String, default: null },
     },
 
-    // â”€â”€ Security Events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Security Events ---------------------------------------------------
     securityEvents: [
       {
         event:       { type: String, required: true },
@@ -207,12 +207,12 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // â”€â”€ Relationships (e-commerce) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Relationships (e-commerce) ----------------------------------------
     address:          [{ type: mongoose.Schema.Types.ObjectId, ref: 'Address' }],
     favoriteProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     referredBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
-    // â”€â”€ Preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Preferences -------------------------------------------------------
     preferences: {
       newsletter:    { type: Boolean, default: false },
       notifications: { type: Boolean, default: true },
@@ -222,7 +222,7 @@ const userSchema = new mongoose.Schema(
     },
     interests: [{ type: String }],
 
-    // â”€â”€ E-commerce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- E-commerce --------------------------------------------------------
     loyaltyPoints:   { type: Number, default: 0 },
     referralCode:    { type: String, default: null },
     paymentMethods:  [{ type: mongoose.Schema.Types.Mixed }],
@@ -234,7 +234,7 @@ const userSchema = new mongoose.Schema(
     },
     subscriptionType: { type: String, default: null },
 
-    // â”€â”€ Org / Classification metadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Org / Classification metadata ------------------------------------
     meta: {
       department:   { type: String, trim: true, default: null },
       division:     { type: String, trim: true, default: null },
@@ -249,7 +249,7 @@ const userSchema = new mongoose.Schema(
       customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     },
 
-    // â”€â”€ Registration source â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Registration source -----------------------------------------------
     registrationSource: {
       type: String,
       enum: ['email','google','facebook','github','apple','phone'],
@@ -260,7 +260,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// â”€â”€ Indexes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Indexes ----------------------------------------------------------------
 userSchema.index({ tenantId: 1, email: 1 },    { unique: true });
 userSchema.index({ tenantId: 1, username: 1 }, { unique: true });
 userSchema.index({ tenantId: 1, status: 1 });
@@ -269,7 +269,7 @@ userSchema.index({ tenantId: 1, role: 1 });
 userSchema.index({ tenantId: 1, 'meta.tags': 1 });
 userSchema.index({ tenantId: 1, 'socialAccounts.provider': 1, 'socialAccounts.providerId': 1 });
 
-// â”€â”€ Pre-save: cap unbounded subdocument arrays â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Pre-save: cap unbounded subdocument arrays -----------------------------
 userSchema.pre('save', function (next) {
   const now = new Date();
   const MAX_SESSIONS      = 50;
@@ -301,7 +301,7 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// â”€â”€ Virtuals â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Virtuals --------------------------------------------------------------
 userSchema.virtual('fullName').get(function () {
   return [this.firstName, this.lastName].filter(Boolean).join(' ') || this.username;
 });
@@ -314,7 +314,7 @@ userSchema.virtual('hasActiveTOTP').get(function () {
   return !!(this.twoFactorAuth?.enabled && this.twoFactorAuth?.setupCompleted);
 });
 
-// â”€â”€ Instance Methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Instance Methods -------------------------------------------------------
 userSchema.methods.comparePassword = function (plain) {
   if (!this.hash_password) return Promise.resolve(false);
   return bcrypt.compare(plain, this.hash_password);
@@ -399,7 +399,7 @@ userSchema.methods.resetFailedLogin = async function () {
   return this.save();
 };
 
-// â”€â”€ Static Methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Static Methods --------------------------------------------------------
 userSchema.statics.findByEmail = function (tenantId, email) {
   return this.findOne({ tenantId, email: email.toLowerCase(), isDeleted: false });
 };
@@ -483,7 +483,7 @@ userSchema.statics.getPaginatedUsers = async function ({
   return { data, total, page, limit: safeLimit, totalPages, nextCursor };
 };
 
-// â”€â”€ All-in-one stats (single-call for the analytics dashboard) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- All-in-one stats (single-call for the analytics dashboard) --------------
 userSchema.statics.getAllTableStats = async function (opts = {}) {
   const tenantId     = opts.tenantId;
   const trendDays    = parseInt(opts.trendDays,    10) || 30;
@@ -499,47 +499,47 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
   const settle = (p) => p.then((v) => v).catch(() => null);
 
   const [
-    // â”€â”€ Counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Counts -----------------------------------------------------------
     totalUsers, activeUsers, inactiveUsers, pendingUsers,
     bannedUsers, deletedUsers, suspendedUsers,
     verifiedUsers, emailVerified, phoneVerified,
     twoFactorEnabled, newsletterSubscribed, notificationsEnabled,
     neverLoggedIn,
-    // â”€â”€ Growth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Growth -----------------------------------------------------------
     newToday, newLast7d, newLast30d,
-    // â”€â”€ Login activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Login activity ---------------------------------------------------
     loginLast24h, loginLast7d, loginLast30d,
-    // â”€â”€ Group-by aggregations â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Group-by aggregations ---------------------------------------------
     byRole, byStatus, bySubscriptionType, bySubscriptionStatus,
     byCountry, byGender, byLanguage, byTheme,
-    // â”€â”€ Security flags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Security flags ----------------------------------------------------
     accountSecurityStats,
     securityLoginStats,
-    // â”€â”€ Commerce & profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Commerce & profile ------------------------------------------------
     loyaltyStats, loyaltyBrackets, topLoyalUsers,
     topInterests,
     socialProviderStats,
     paymentMethodStats,
     profileCompletenessStats,
-    // â”€â”€ Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Sessions ---------------------------------------------------------
     sessionStats,
-    // â”€â”€ Devices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Devices ----------------------------------------------------------
     byDeviceType,
-    // â”€â”€ Trend series â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Trend series -----------------------------------------------------
     registrationTrend, loginTrend,
-    // â”€â”€ Registration source & login behaviour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Registration source & login behaviour -----------------------------
     byRegistrationSource, loginCountStats, loginMethodDistribution,
-    // â”€â”€ Preference extras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Preference extras -------------------------------------------------
     byCurrency,
-    // â”€â”€ Org / meta â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Org / meta --------------------------------------------------------
     byDepartment, byJobTitle, topMetaTags,
-    // â”€â”€ Social media links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Social media links ------------------------------------------------
     socialMediaLinkStats,
-    // â”€â”€ Security events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Security events ---------------------------------------------------
     securityEventStats,
-    // â”€â”€ Devices (OS / browser) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Devices (OS / browser) ---------------------------------------------
     deviceOsStats, deviceBrowserStats, trustedDeviceStats,
-    // â”€â”€ Referrals & favourites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Referrals & favourites --------------------------------------------
     referralStats,
   ] = await Promise.all([
     // counts
@@ -894,7 +894,7 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
     generatedAt: new Date(),
     trendDays,
 
-    // â”€â”€ User counts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- User counts ---------------------------------------------------
     counts: {
       total: totalUsers, active: activeUsers, inactive: inactiveUsers,
       pending: pendingUsers, banned: bannedUsers, deleted: deletedUsers, suspended: suspendedUsers,
@@ -902,21 +902,21 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
       twoFactorEnabled, newsletterSubscribed, notificationsEnabled, neverLoggedIn,
     },
 
-    // â”€â”€ Growth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Growth --------------------------------------------------------
     growth: { newToday, newLast7d, newLast30d },
 
-    // â”€â”€ Login activity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Login activity ------------------------------------------------
     loginActivity: { loginLast24h, loginLast7d, loginLast30d },
 
-    // â”€â”€ Distributions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Distributions ------------------------------------------------
     byRole, byStatus, bySubscriptionType, bySubscriptionStatus,
     byCountry, byGender, byLanguage, byTheme, byDeviceType,
 
-    // â”€â”€ Security â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Security -----------------------------------------------------
     accountSecurityStats: accountSecurityStats?.[0] ?? null,
     securityLoginStats:   securityLoginStats?.[0] ?? null,
 
-    // â”€â”€ Loyalty & commerce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Loyalty & commerce --------------------------------------------
     loyaltyStats:     loyaltyStats?.[0] ?? null,
     loyaltyBrackets,
     topLoyalUsers,
@@ -924,37 +924,37 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
     socialProviderStats,
     paymentMethodStats:   paymentMethodStats?.[0] ?? null,
 
-    // â”€â”€ Preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Preferences --------------------------------------------------
     profileCompletenessStats: profileCompletenessStats?.[0] ?? null,
 
-    // â”€â”€ Sessions & devices â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Sessions & devices --------------------------------------------
     sessionStats: sessionStats?.[0] ?? null,
 
-    // â”€â”€ Trends â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Trends -------------------------------------------------------
     registrationTrend, loginTrend,
 
-    // â”€â”€ Registration source & login behaviour â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Registration source & login behaviour ------------------------
     byRegistrationSource,
     loginCountStats:        loginCountStats?.[0]     ?? null,
     loginMethodDistribution,
 
-    // â”€â”€ Preference extras â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Preference extras ---------------------------------------------
     byCurrency,
 
-    // â”€â”€ Org metadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Org metadata -------------------------------------------------
     byDepartment, byJobTitle, topMetaTags,
 
-    // â”€â”€ Social media links â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Social media links --------------------------------------------
     socialMediaLinkStats:   socialMediaLinkStats?.[0] ?? null,
 
-    // â”€â”€ Security events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Security events -----------------------------------------------
     securityEventStats,
 
-    // â”€â”€ Devices (OS / browser) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Devices (OS / browser) ----------------------------------------
     deviceOsStats, deviceBrowserStats,
     trustedDeviceStats:     trustedDeviceStats?.[0]  ?? null,
 
-    // â”€â”€ Referrals & favourites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // -- Referrals & favourites ----------------------------------------
     referralStats:          referralStats?.[0]       ?? null,
   };
 };
