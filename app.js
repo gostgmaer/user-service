@@ -81,6 +81,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Response envelope ─────────────────────────────────────────────────────────
+// Injects: timestamp, requestId, statusCode, status into every JSON response.
+// Also serialises _id → id (string), strips __v, strips null values, sets headers.
+app.use((req, res, next) => {
+  res.setHeader('X-Request-ID', req.requestId);
+  const _json = res.json.bind(res);
+  res.json = function (body) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    if (body !== null && body !== undefined && typeof body === 'object' && !Array.isArray(body)) {
+      body.timestamp  = new Date().toISOString();
+      body.requestId  = req.requestId;
+      body.statusCode = res.statusCode;
+      body.status     = res.statusCode < 400 ? 'success' : 'error';
+    }
+    return _json(_cleanResponse(body));
+  };
+  next();
+});
+
 // ── Request timeout (30 s) ────────────────────────────────────────────────────
 app.use(requestTimeout(30_000));
 
@@ -111,6 +130,11 @@ if (process.env.NODE_ENV !== 'production') {
   app.get('/api-docs.json', (_req, res) => res.json(swaggerSpec));
 }
 
+// ── Tenant resolution ───────────────────────────────────────────────────────
+// Health, metrics, and docs registered above are intentionally excluded.
+const { resolveTenantMiddleware } = require('./src/middleware/tenant');
+app.use(resolveTenantMiddleware);
+
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/users', userRoutes);
 
@@ -128,3 +152,26 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+// ── Response transform ────────────────────────────────────────────────────────
+// Serialises Mongoose docs (_id → id, drops __v) and strips null values.
+function _cleanResponse(val) {
+  if (val === null || val === undefined) return undefined;
+  if (typeof val !== 'object') return val;
+  if (val instanceof Date) return val;
+  if (Buffer.isBuffer(val)) return val;
+  if (Array.isArray(val)) return val.map(_cleanResponse).filter(v => v !== undefined);
+  const src = typeof val.toJSON === 'function' ? val.toJSON() : val;
+  if (typeof src !== 'object' || src === null) return src;
+  const out = {};
+  for (const key of Object.keys(src)) {
+    if (key === '__v' || key === '_id' || key === 'id' ||
+        key === 'isDeleted' || key === 'deletedAt' ||
+        key === 'created_by' || key === 'updated_by' || key === 'deleted_by') continue;
+    const v = _cleanResponse(src[key]);
+    if (v !== undefined) out[key] = v;
+  }
+  const rawId = src.id !== undefined ? src.id : src._id;
+  if (rawId !== undefined) out.id = String(rawId);
+  return out;
+}

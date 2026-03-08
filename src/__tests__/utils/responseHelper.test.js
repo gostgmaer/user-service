@@ -47,11 +47,12 @@ describe('responseHelper', () => {
       expect(body).not.toHaveProperty('data');
     });
 
-    it('attaches meta when provided', () => {
+    it('omits pagination field when none given', () => {
       const res  = mockRes();
-      sendSuccess(res, 'ok', null, 200, { page: 1 });
+      sendSuccess(res, 'ok', null, 200);
       const body = res.json.mock.calls[0][0];
-      expect(body.meta).toEqual({ page: 1 });
+      expect(body).not.toHaveProperty('pagination');
+      expect(body).not.toHaveProperty('meta');
     });
   });
 
@@ -63,7 +64,7 @@ describe('responseHelper', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
         success: true,
-        data:    { _id: 'abc' },
+        data:    { id: 'abc' },
       }));
     });
   });
@@ -86,17 +87,17 @@ describe('responseHelper', () => {
       expect(res.status).toHaveBeenCalledWith(500);
     });
 
-    it('attaches errors array when provided', () => {
+    it('attaches details array when provided', () => {
       const res = mockRes();
       sendError(res, 'Bad', 422, 'VALIDATION_ERROR', ['field required']);
       const body = res.json.mock.calls[0][0];
-      expect(body.error.errors).toEqual(['field required']);
+      expect(body.error.details).toEqual(['field required']);
     });
   });
 
   // sendPaginated(res, message, data, total, page, limit, extra)
   describe('sendPaginated', () => {
-    it('sends a paginated response with metadata in meta', () => {
+    it('sends a paginated response with pagination at top level', () => {
       const res  = mockRes();
       const data = [{ id: 1 }, { id: 2 }];
       sendPaginated(res, 'Users retrieved', data, 50, 1, 10);
@@ -104,11 +105,13 @@ describe('responseHelper', () => {
       const body = res.json.mock.calls[0][0];
       expect(body.success).toBe(true);
       expect(body.data).toEqual(data);
-      expect(body.meta).toBeDefined();
-      expect(body.meta.total).toBe(50);
-      expect(body.meta.page).toBe(1);
-      expect(body.meta.limit).toBe(10);
-      expect(body.meta.totalPages).toBe(5);
+      expect(body.pagination).toBeDefined();
+      expect(body.pagination.totalRecords).toBe(50);
+      expect(body.pagination.page).toBe(1);
+      expect(body.pagination.pageSize).toBe(10);
+      expect(body.pagination.totalPages).toBe(5);
+      expect(body.pagination.hasNext).toBe(true);
+      expect(body.pagination.hasPrev).toBe(false);
     });
   });
 

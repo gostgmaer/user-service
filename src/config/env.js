@@ -62,6 +62,14 @@ const env = {
     bulk: { windowMs: e.RATE_LIMIT_WINDOW_MS,  max: e.BULK_RATE_LIMIT_MAX },
   },
 
+  // ── Tenant ───────────────────────────────────────────────────────────────
+  // true  → x-tenant-id header required on every API request (falls back to DEFAULT_TENANT_ID)
+  // false → tenant is optional; service continues without multi-tenant isolation
+  tenant: {
+    enabled:         process.env.TENANCY_ENABLED === 'true',
+    defaultTenantId: process.env.DEFAULT_TENANT_ID?.trim() || null,
+  },
+
   // ── File uploads ──────────────────────────────────────────────────────────
   MAX_FILE_SIZE: e.MAX_FILE_SIZE,
   STORAGE_TYPE:  e.STORAGE_TYPE,

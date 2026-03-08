@@ -39,6 +39,8 @@ const TEMPLATES = {
 
   // Account lifecycle
   ACCOUNT_DELETED:         'accountDeletedTemplate',
+  ACCOUNT_BANNED:          'accountDeactivationWarningTemplate',
+  ACCOUNT_SUSPENDED:       'accountDeactivationWarningTemplate',
 
   // Verification
   USER_VERIFIED:           'accountVerifiedTemplate',
@@ -393,6 +395,40 @@ const emailNotification = (user, title, message, type = 'info') =>
     },
   });
 
+/**
+ * Notify the user that their account has been permanently banned.
+ * @param {object} user   - User document
+ * @param {string} reason - Optional reason provided by admin
+ */
+const emailAccountBanned = (user, reason) =>
+  sendEmail({
+    to:         user.email,
+    templateId: TEMPLATES.ACCOUNT_BANNED,
+    data: {
+      name:   displayName(user),
+      reason: reason || 'Violation of terms of service',
+      status: 'banned',
+    },
+  });
+
+/**
+ * Notify the user that their account has been temporarily suspended.
+ * @param {object} user   - User document
+ * @param {string} reason - Suspension reason
+ * @param {Date}   until  - Optional suspension end date
+ */
+const emailAccountSuspended = (user, reason, until) =>
+  sendEmail({
+    to:         user.email,
+    templateId: TEMPLATES.ACCOUNT_SUSPENDED,
+    data: {
+      name:   displayName(user),
+      reason: reason || 'Temporary suspension',
+      status: 'suspended',
+      until:  until ? new Date(until).toUTCString() : 'further notice',
+    },
+  });
+
 // ── Exports ──────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -420,4 +456,6 @@ module.exports = {
   emailSocialLinked,
   emailSocialUnlinked,
   emailNotification,
+  emailAccountBanned,
+  emailAccountSuspended,
 };

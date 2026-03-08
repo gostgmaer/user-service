@@ -71,4 +71,34 @@ addressSchema.pre('save', async function (next) {
   next();
 });
 
+/**
+ * Resolve a user reference to the best available display label.
+ * Priority: "First Last" → username → email → id string
+ */
+function resolveUserRef(ref) {
+  if (!ref) return null;
+  if (ref !== null && typeof ref === 'object' && !ref._bsontype) {
+    const fullName = [ref.firstName, ref.lastName].filter(Boolean).join(' ').trim();
+    if (fullName)   return fullName;
+    if (ref.username) return ref.username;
+    if (ref.email)    return ref.email;
+    return String(ref._id ?? ref.id);
+  }
+  return String(ref);
+}
+
+/**
+ * Returns a safe API shape with actor refs resolved to display names.
+ * Requires the doc to be populated: .populate('created_by updated_by', 'firstName lastName username email')
+ */
+addressSchema.methods.toAPIResponse = function () {
+  const obj = this.toObject();
+  delete obj.__v;
+  delete obj.created_by;
+  delete obj.updated_by;
+  obj.createdBy = resolveUserRef(this.created_by);
+  obj.updatedBy = resolveUserRef(this.updated_by);
+  return obj;
+};
+
 module.exports = mongoose.model('Address', addressSchema);
