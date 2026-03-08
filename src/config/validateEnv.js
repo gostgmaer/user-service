@@ -56,6 +56,10 @@ const schema = Joi.object({
   LOG_FORMAT: Joi.string().valid('json','pretty').default('json'),
 
   TRUST_PROXY: Joi.number().default(1),
+
+  // Tenant configuration
+  TENANCY_ENABLED:   Joi.string().valid('true', 'false').default('false'),
+  DEFAULT_TENANT_ID: Joi.string().optional().allow(''),
 }).unknown(true);
 
 const { error, value } = schema.validate(process.env);

@@ -14,8 +14,19 @@ const { checkPasswordStrength }  = require('../utils/security');
 const userEmails                 = require('../lib/userEmails');
 const ActivityHelper             = require('../services/activityHelpers');
 const env                        = require('../config/env');
+const logger        = require('../services/logger');
+const serviceClient = require('../lib/serviceClient');
+const services      = require('../config/services');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Notify user-auth-service to sync user state + revoke active tokens. Fire-and-forget.
+const syncStatusToAuthService = (userId, tenantId, payload) =>
+  serviceClient
+    .patch(`${services.authService}/api/internal/users/${userId}/force-status`, payload, {
+      headers: { 'x-tenant-id': tenantId },
+    })
+    .catch((err) => logger.error('[UserController] Auth service status sync failed', { userId, err: err.message }));
 
 // role is populated (object with .name) after auth middleware
 const isAdmin = (user) => user && ['super_admin','admin'].includes(user.role?.name);
@@ -40,6 +51,10 @@ const enrichUser = (user, includeCalc = true) => {
 // Strip sensitive fields before sending user data to the client
 const sanitizeUser = (user) => {
   const obj = typeof user.toObject === 'function' ? user.toObject() : { ...user };
+  // Normalize role — reduce populated role object to just the name string
+  if (obj.role && typeof obj.role === 'object' && obj.role.name !== undefined) {
+    obj.role = obj.role.name;
+  }
   delete obj.hash_password;
   delete obj.refreshTokens;
   delete obj.passwordReset;
@@ -47,6 +62,14 @@ const sanitizeUser = (user) => {
   delete obj.currentOTP;
   delete obj.twoFactorAuth?.secret;
   delete obj.__v;
+  // Soft-delete tombstone — never expose to clients
+  delete obj.isDeleted;
+  delete obj.deletedAt;
+  // Raw snake_case actor refs — strip raw ObjectIds (toAPIResponse resolves them for admin views)
+  delete obj.created_by;
+  delete obj.updated_by;
+  delete obj.deleted_by;
+  // _id → id renaming is handled by serialize() in responseHelper
   return obj;
 };
 
@@ -60,7 +83,7 @@ class UserController {
   static getUsers = catchAsync(async (req, res) => {
     const filter  = buildUserQuery(req.query, req.user);
     const options = buildUserQueryOptions(req.query);
-    const result  = await User.getPaginatedUsers({ query: filter, ...options });
+    const result  = await User.getPaginatedUsers({ query: filter, populate: [{ path: 'role', select: '_id name' }], ...options });
 
     return sendPaginated(
       res,
@@ -80,11 +103,13 @@ class UserController {
 
     let user;
     if (mongoose.Types.ObjectId.isValid(identifier)) {
-      user = await User.findOne({ _id: identifier, tenantId, isDeleted: false });
+      user = await User.findOne({ _id: identifier, tenantId, isDeleted: false }).populate('role', '_id name');
     } else if (identifier.includes('@')) {
       user = await User.findByEmail(tenantId, identifier);
+      if (user) await user.populate('role', '_id name');
     } else {
       user = await User.findByUsername(tenantId, identifier);
+      if (user) await user.populate('role', '_id name');
     }
 
     if (!user) throw AppError.notFound('User not found');
@@ -120,6 +145,7 @@ class UserController {
 
     await userEmails.emailUserInvite(user);
 
+    await user.populate('role', '_id name');
     return sendCreated(res, 'User created successfully', sanitizeUser(user));
   });
 
@@ -151,6 +177,7 @@ class UserController {
 
     ActivityHelper.logCRUD(req, 'User', 'UPDATE', { id });
 
+    await user.populate('role', '_id name');
     return sendSuccess(res, 'User updated successfully', sanitizeUser(user));
   });
 
@@ -170,6 +197,7 @@ class UserController {
     user.deleted_by = req.userId;
     user.deletedAt  = new Date();
     await user.save();
+    syncStatusToAuthService(id, tenantId, { isDeleted: true, isActive: false, status: 'deleted' });
 
     ActivityHelper.logCRUD(req, 'User', 'DELETE', { id });
 
@@ -182,7 +210,7 @@ class UserController {
 
   /** GET /api/users/profile */
   static getMyProfileStatisticsController = catchAsync(async (req, res) => {
-    const user = await User.findById(req.userId).populate('address');
+    const user = await User.findById(req.userId).populate('address').populate('role', '_id name');
     if (!user) throw AppError.notFound('User not found');
     return sendSuccess(res, 'Profile retrieved', sanitizeUser(enrichUser(user)));
   });
@@ -196,6 +224,7 @@ class UserController {
     if (!isOwnerOrAdmin(req, id)) throw AppError.forbidden('Access denied');
 
     await user.updateProfile(req.body);
+    await user.populate('role', '_id name');
     return sendSuccess(res, 'Profile updated', sanitizeUser(user));
   });
 
@@ -427,10 +456,12 @@ class UserController {
     const { id, addressId } = req.params;
     const tenantId = req.tenantId || req.user?.tenantId;
 
-    const address = await Address.findOneAndDelete({ _id: addressId, user: id, tenantId });
+    const address = await Address.findOneAndUpdate(
+      { _id: addressId, user: id, tenantId, isDeleted: false },
+      { $set: { isDeleted: true, isActive: false, status: 'deleted', updated_by: req.userId } },
+      { new: true }
+    );
     if (!address) throw AppError.notFound('Address not found');
-
-    await User.updateOne({ _id: id }, { $pull: { address: addressId } });
 
     return sendNoContent(res);
   });
@@ -928,6 +959,17 @@ class UserController {
     user.isActive   = status === 'active';
     user.updated_by = req.userId;
     await user.save();
+
+    if (['inactive', 'banned', 'suspended', 'deleted'].includes(status)) {
+      syncStatusToAuthService(id, tenantId, { isActive: false, status });
+      if (status === 'banned') userEmails.emailAccountBanned(user, req.body.reason).catch(() => {});
+      else if (status === 'suspended') userEmails.emailAccountSuspended(user, req.body.reason, req.body.until).catch(() => {});
+      else userEmails.emailAccountDeactivated(user, `Status changed to ${status}`).catch(() => {});
+    } else if (status === 'active') {
+      syncStatusToAuthService(id, tenantId, { isActive: true, status: 'active' });
+      userEmails.emailAccountReactivated(user).catch(() => {});
+    }
+
     return sendSuccess(res, 'User status updated', { status: user.status });
   });
 
@@ -944,6 +986,7 @@ class UserController {
     user.updated_by = req.userId;
     if (reason) user.meta = { ...user.meta, deactivationReason: reason };
     await user.save();
+    syncStatusToAuthService(id, tenantId, { isActive: false, status: 'inactive' });
     await user.logSecurityEvent('account_deactivated', reason || 'Account deactivated', 'medium');
     await userEmails.emailAccountDeactivated(user, reason);
     return sendSuccess(res, 'Account deactivated');
@@ -997,6 +1040,7 @@ class UserController {
     user.isActive   = false;
     user.updated_by = req.userId;
     await user.save();
+    syncStatusToAuthService(userId, tenantId, { isActive: false, status: 'inactive' });
     await user.logSecurityEvent('admin_deactivated', reason || 'Admin deactivated account', 'medium');
     await userEmails.emailAccountDeactivated(user, reason);
     return sendSuccess(res, 'User deactivated successfully', sanitizeUser(user));
@@ -1114,6 +1158,7 @@ class UserController {
     user.activeSessions  = user.activeSessions.map((s) => ({ ...s.toObject?.() ?? s, isActive: false }));
     user.refreshTokens   = user.refreshTokens.map((t) => ({ ...t.toObject?.() ?? t, isActive: false }));
     await user.save();
+    syncStatusToAuthService(id, tenantId, { invalidateSessions: true });
     await user.logSecurityEvent('all_sessions_invalidated', 'All sessions invalidated', 'high');
     await userEmails.emailSessionsInvalidated(user);
     return sendSuccess(res, 'All sessions invalidated');

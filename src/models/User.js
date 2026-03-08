@@ -1,11 +1,11 @@
 // src/models/User.js
-// Comprehensive User schema — shared with auth service (same DB, same collection).
+// Comprehensive User schema � shared with auth service (same DB, same collection).
 // This model is the single source of truth for the users collection.
 'use strict';
 
 const mongoose = require('mongoose');
 const { getRoleModel } = require('./roleRef');
-const bcrypt   = require('bcrypt');
+const bcrypt   = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const env      = require('../config/env');
 
@@ -15,15 +15,15 @@ const LOCK_WINDOW_MS = 30 * 60 * 1000;
 
 const userSchema = new mongoose.Schema(
   {
-    // ── Multi-tenancy ─────────────────────────────────────────────────────
+    // -- Multi-tenancy -----------------------------------------------------
     tenantId: { type: String, required: true, index: true },
 
-    // ── Identity ─────────────────────────────────────────────────────────
+    // -- Identity ---------------------------------------------------------
     username:      { type: String, required: true, trim: true, minlength: 3, maxlength: 30 },
     email:         { type: String, required: true, lowercase: true, trim: true },
     hash_password: { type: String, default: null },
 
-    // ── Profile ───────────────────────────────────────────────────────────
+    // -- Profile -----------------------------------------------------------
     firstName:   { type: String, trim: true, default: null },
     lastName:    { type: String, trim: true, default: null },
     dateOfBirth: { type: Date, default: null },
@@ -41,7 +41,7 @@ const userSchema = new mongoose.Schema(
       type: { type: String, default: null },
     },
 
-    // ── Status & Role ─────────────────────────────────────────────────────
+    // -- Status & Role -----------------------------------------------------
     role:        { type: mongoose.Schema.Types.ObjectId, ref: 'Role', default: null },
     permissions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Permission' }],
     isActive: { type: Boolean, default: true },
@@ -52,20 +52,20 @@ const userSchema = new mongoose.Schema(
       default: 'pending',
     },
 
-    // ── Audit ─────────────────────────────────────────────────────────────
+    // -- Audit -------------------------------------------------------------
     created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     updated_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     deleted_by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     deletedAt:  { type: Date, default: null },
 
-    // ── Verification ──────────────────────────────────────────────────────
+    // -- Verification ------------------------------------------------------
     emailVerified: { type: Boolean, default: false },
     phoneVerified: { type: Boolean, default: false },
     isVerified:    { type: Boolean, default: false },
     emailVerificationToken:       { type: String, default: null },
     emailVerificationTokenExpiry: { type: Date,   default: null },
 
-    // ── Password Reset ────────────────────────────────────────────────────
+    // -- Password Reset ----------------------------------------------------
     passwordReset: {
       token:       { type: String, default: null },
       tokenExpiry: { type: Date,   default: null },
@@ -73,13 +73,13 @@ const userSchema = new mongoose.Schema(
       lastAttempt: { type: Date,   default: null },
     },
 
-    // ── Account Unlock ────────────────────────────────────────────────────
+    // -- Account Unlock ----------------------------------------------------
     unlockToken: {
       token:       { type: String, default: null },
       tokenExpiry: { type: Date,   default: null },
     },
 
-    // ── Login Security ────────────────────────────────────────────────────
+    // -- Login Security ----------------------------------------------------
     loginSecurity: {
       failedAttempts:             { type: Number,  default: 0 },
       lockedUntil:                { type: Date,    default: null },
@@ -105,7 +105,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ── Sessions & Tokens ─────────────────────────────────────────────────
+    // -- Sessions & Tokens -------------------------------------------------
     activeSessions: [
       {
         sessionId:  { type: String, required: true },
@@ -128,7 +128,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ── OTP / 2FA ─────────────────────────────────────────────────────────
+    // -- OTP / 2FA ---------------------------------------------------------
     currentOTP: {
       code:        { type: String,  default: null },
       hashedCode:  { type: String,  default: null },
@@ -155,7 +155,7 @@ const userSchema = new mongoose.Schema(
       lastUsed:       { type: Date,    default: null },
     },
 
-    // ── Devices ───────────────────────────────────────────────────────────
+    // -- Devices -----------------------------------------------------------
     knownDevices: [
       {
         deviceId:    { type: String,  required: true },
@@ -173,7 +173,7 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ── Social Accounts ───────────────────────────────────────────────────
+    // -- Social Accounts ---------------------------------------------------
     socialAccounts: [
       {
         provider:    { type: String, required: true },
@@ -194,7 +194,7 @@ const userSchema = new mongoose.Schema(
       pinterest: { type: String, default: null },
     },
 
-    // ── Security Events ───────────────────────────────────────────────────
+    // -- Security Events ---------------------------------------------------
     securityEvents: [
       {
         event:       { type: String, required: true },
@@ -207,12 +207,12 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // ── Relationships (e-commerce) ────────────────────────────────────────
+    // -- Relationships (e-commerce) ----------------------------------------
     address:          [{ type: mongoose.Schema.Types.ObjectId, ref: 'Address' }],
     favoriteProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
     referredBy:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
 
-    // ── Preferences ───────────────────────────────────────────────────────
+    // -- Preferences -------------------------------------------------------
     preferences: {
       newsletter:    { type: Boolean, default: false },
       notifications: { type: Boolean, default: true },
@@ -222,7 +222,7 @@ const userSchema = new mongoose.Schema(
     },
     interests: [{ type: String }],
 
-    // ── E-commerce ────────────────────────────────────────────────────────
+    // -- E-commerce --------------------------------------------------------
     loyaltyPoints:   { type: Number, default: 0 },
     referralCode:    { type: String, default: null },
     paymentMethods:  [{ type: mongoose.Schema.Types.Mixed }],
@@ -234,7 +234,7 @@ const userSchema = new mongoose.Schema(
     },
     subscriptionType: { type: String, default: null },
 
-    // ── Org / Classification metadata ────────────────────────────────────
+    // -- Org / Classification metadata ------------------------------------
     meta: {
       department:   { type: String, trim: true, default: null },
       division:     { type: String, trim: true, default: null },
@@ -249,7 +249,7 @@ const userSchema = new mongoose.Schema(
       customFields: { type: mongoose.Schema.Types.Mixed, default: {} },
     },
 
-    // ── Registration source ───────────────────────────────────────────────
+    // -- Registration source -----------------------------------------------
     registrationSource: {
       type: String,
       enum: ['email','google','facebook','github','apple','phone'],
@@ -260,7 +260,7 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 
-// ── Indexes ────────────────────────────────────────────────────────────────
+// -- Indexes ----------------------------------------------------------------
 userSchema.index({ tenantId: 1, email: 1 },    { unique: true });
 userSchema.index({ tenantId: 1, username: 1 }, { unique: true });
 userSchema.index({ tenantId: 1, status: 1 });
@@ -269,7 +269,7 @@ userSchema.index({ tenantId: 1, role: 1 });
 userSchema.index({ tenantId: 1, 'meta.tags': 1 });
 userSchema.index({ tenantId: 1, 'socialAccounts.provider': 1, 'socialAccounts.providerId': 1 });
 
-// ── Pre-save: cap unbounded subdocument arrays ─────────────────────────────
+// -- Pre-save: cap unbounded subdocument arrays -----------------------------
 userSchema.pre('save', function (next) {
   const now = new Date();
   const MAX_SESSIONS      = 50;
@@ -301,7 +301,7 @@ userSchema.pre('save', function (next) {
   next();
 });
 
-// ── Virtuals ──────────────────────────────────────────────────────────────
+// -- Virtuals --------------------------------------------------------------
 userSchema.virtual('fullName').get(function () {
   return [this.firstName, this.lastName].filter(Boolean).join(' ') || this.username;
 });
@@ -314,7 +314,7 @@ userSchema.virtual('hasActiveTOTP').get(function () {
   return !!(this.twoFactorAuth?.enabled && this.twoFactorAuth?.setupCompleted);
 });
 
-// ── Instance Methods ───────────────────────────────────────────────────────
+// -- Instance Methods -------------------------------------------------------
 userSchema.methods.comparePassword = function (plain) {
   if (!this.hash_password) return Promise.resolve(false);
   return bcrypt.compare(plain, this.hash_password);
@@ -399,7 +399,7 @@ userSchema.methods.resetFailedLogin = async function () {
   return this.save();
 };
 
-// ── Static Methods ────────────────────────────────────────────────────────
+// -- Static Methods --------------------------------------------------------
 userSchema.statics.findByEmail = function (tenantId, email) {
   return this.findOne({ tenantId, email: email.toLowerCase(), isDeleted: false });
 };
@@ -483,7 +483,7 @@ userSchema.statics.getPaginatedUsers = async function ({
   return { data, total, page, limit: safeLimit, totalPages, nextCursor };
 };
 
-// ── All-in-one stats (single-call for the analytics dashboard) ──────────────
+// -- All-in-one stats (single-call for the analytics dashboard) --------------
 userSchema.statics.getAllTableStats = async function (opts = {}) {
   const tenantId     = opts.tenantId;
   const trendDays    = parseInt(opts.trendDays,    10) || 30;
@@ -499,47 +499,47 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
   const settle = (p) => p.then((v) => v).catch(() => null);
 
   const [
-    // ── Counts ───────────────────────────────────────────────────────────
+    // -- Counts -----------------------------------------------------------
     totalUsers, activeUsers, inactiveUsers, pendingUsers,
     bannedUsers, deletedUsers, suspendedUsers,
     verifiedUsers, emailVerified, phoneVerified,
     twoFactorEnabled, newsletterSubscribed, notificationsEnabled,
     neverLoggedIn,
-    // ── Growth ───────────────────────────────────────────────────────────
+    // -- Growth -----------------------------------------------------------
     newToday, newLast7d, newLast30d,
-    // ── Login activity ───────────────────────────────────────────────────
+    // -- Login activity ---------------------------------------------------
     loginLast24h, loginLast7d, loginLast30d,
-    // ── Group-by aggregations ─────────────────────────────────────────────
+    // -- Group-by aggregations ---------------------------------------------
     byRole, byStatus, bySubscriptionType, bySubscriptionStatus,
     byCountry, byGender, byLanguage, byTheme,
-    // ── Security flags ────────────────────────────────────────────────────
+    // -- Security flags ----------------------------------------------------
     accountSecurityStats,
     securityLoginStats,
-    // ── Commerce & profile ────────────────────────────────────────────────
+    // -- Commerce & profile ------------------------------------------------
     loyaltyStats, loyaltyBrackets, topLoyalUsers,
     topInterests,
     socialProviderStats,
     paymentMethodStats,
     profileCompletenessStats,
-    // ── Sessions ─────────────────────────────────────────────────────────
+    // -- Sessions ---------------------------------------------------------
     sessionStats,
-    // ── Devices ──────────────────────────────────────────────────────────
+    // -- Devices ----------------------------------------------------------
     byDeviceType,
-    // ── Trend series ─────────────────────────────────────────────────────
+    // -- Trend series -----------------------------------------------------
     registrationTrend, loginTrend,
-    // ── Registration source & login behaviour ─────────────────────────────
+    // -- Registration source & login behaviour -----------------------------
     byRegistrationSource, loginCountStats, loginMethodDistribution,
-    // ── Preference extras ─────────────────────────────────────────────────
+    // -- Preference extras -------------------------------------------------
     byCurrency,
-    // ── Org / meta ────────────────────────────────────────────────────────
+    // -- Org / meta --------------------------------------------------------
     byDepartment, byJobTitle, topMetaTags,
-    // ── Social media links ────────────────────────────────────────────────
+    // -- Social media links ------------------------------------------------
     socialMediaLinkStats,
-    // ── Security events ───────────────────────────────────────────────────
+    // -- Security events ---------------------------------------------------
     securityEventStats,
-    // ── Devices (OS / browser) ─────────────────────────────────────────────
+    // -- Devices (OS / browser) ---------------------------------------------
     deviceOsStats, deviceBrowserStats, trustedDeviceStats,
-    // ── Referrals & favourites ────────────────────────────────────────────
+    // -- Referrals & favourites --------------------------------------------
     referralStats,
   ] = await Promise.all([
     // counts
@@ -894,7 +894,7 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
     generatedAt: new Date(),
     trendDays,
 
-    // ── User counts ───────────────────────────────────────────────────
+    // -- User counts ---------------------------------------------------
     counts: {
       total: totalUsers, active: activeUsers, inactive: inactiveUsers,
       pending: pendingUsers, banned: bannedUsers, deleted: deletedUsers, suspended: suspendedUsers,
@@ -902,21 +902,21 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
       twoFactorEnabled, newsletterSubscribed, notificationsEnabled, neverLoggedIn,
     },
 
-    // ── Growth ────────────────────────────────────────────────────────
+    // -- Growth --------------------------------------------------------
     growth: { newToday, newLast7d, newLast30d },
 
-    // ── Login activity ────────────────────────────────────────────────
+    // -- Login activity ------------------------------------------------
     loginActivity: { loginLast24h, loginLast7d, loginLast30d },
 
-    // ── Distributions ────────────────────────────────────────────────
+    // -- Distributions ------------------------------------------------
     byRole, byStatus, bySubscriptionType, bySubscriptionStatus,
     byCountry, byGender, byLanguage, byTheme, byDeviceType,
 
-    // ── Security ─────────────────────────────────────────────────────
+    // -- Security -----------------------------------------------------
     accountSecurityStats: accountSecurityStats?.[0] ?? null,
     securityLoginStats:   securityLoginStats?.[0] ?? null,
 
-    // ── Loyalty & commerce ────────────────────────────────────────────
+    // -- Loyalty & commerce --------------------------------------------
     loyaltyStats:     loyaltyStats?.[0] ?? null,
     loyaltyBrackets,
     topLoyalUsers,
@@ -924,40 +924,81 @@ userSchema.statics.getAllTableStats = async function (opts = {}) {
     socialProviderStats,
     paymentMethodStats:   paymentMethodStats?.[0] ?? null,
 
-    // ── Preferences ──────────────────────────────────────────────────
+    // -- Preferences --------------------------------------------------
     profileCompletenessStats: profileCompletenessStats?.[0] ?? null,
 
-    // ── Sessions & devices ────────────────────────────────────────────
+    // -- Sessions & devices --------------------------------------------
     sessionStats: sessionStats?.[0] ?? null,
 
-    // ── Trends ───────────────────────────────────────────────────────
+    // -- Trends -------------------------------------------------------
     registrationTrend, loginTrend,
 
-    // ── Registration source & login behaviour ────────────────────────
+    // -- Registration source & login behaviour ------------------------
     byRegistrationSource,
     loginCountStats:        loginCountStats?.[0]     ?? null,
     loginMethodDistribution,
 
-    // ── Preference extras ─────────────────────────────────────────────
+    // -- Preference extras ---------------------------------------------
     byCurrency,
 
-    // ── Org metadata ─────────────────────────────────────────────────
+    // -- Org metadata -------------------------------------------------
     byDepartment, byJobTitle, topMetaTags,
 
-    // ── Social media links ────────────────────────────────────────────
+    // -- Social media links --------------------------------------------
     socialMediaLinkStats:   socialMediaLinkStats?.[0] ?? null,
 
-    // ── Security events ───────────────────────────────────────────────
+    // -- Security events -----------------------------------------------
     securityEventStats,
 
-    // ── Devices (OS / browser) ────────────────────────────────────────
+    // -- Devices (OS / browser) ----------------------------------------
     deviceOsStats, deviceBrowserStats,
     trustedDeviceStats:     trustedDeviceStats?.[0]  ?? null,
 
-    // ── Referrals & favourites ────────────────────────────────────────
+    // -- Referrals & favourites ----------------------------------------
     referralStats:          referralStats?.[0]       ?? null,
   };
 };
 
 const User = mongoose.model('User', userSchema);
+
+/**
+ * Resolve a user reference to the best available display label.
+ * Priority: "First Last" → username → email → id string
+ */
+function resolveUserRef(ref) {
+  if (!ref) return null;
+  if (ref !== null && typeof ref === 'object' && !ref._bsontype) {
+    const fullName = [ref.firstName, ref.lastName].filter(Boolean).join(' ').trim();
+    if (fullName)   return fullName;
+    if (ref.username) return ref.username;
+    if (ref.email)    return ref.email;
+    return String(ref._id ?? ref.id);
+  }
+  return String(ref);
+}
+
+/**
+ * Returns a safe API shape with actor refs resolved to display names.
+ * Requires the doc to be populated: .populate('created_by updated_by deleted_by', 'firstName lastName username email')
+ */
+userSchema.methods.toAPIResponse = function () {
+  const obj = this.toObject();
+  // Strip sensitive and internal fields
+  const STRIP = new Set([
+    'hash_password', 'refreshTokens', 'passwordReset', 'unlockToken',
+    'currentOTP', 'twoFactorAuth', 'activeSessions', 'loginHistory',
+    'securityEvents', 'knownDevices', 'emailVerificationToken',
+    'emailVerificationTokenExpiry', '__v', 'isDeleted', 'deletedAt',
+    'created_by', 'updated_by', 'deleted_by',
+  ]);
+  for (const k of STRIP) delete obj[k];
+  // Resolve role to name string
+  if (obj.role && typeof obj.role === 'object' && obj.role.name) obj.role = obj.role.name;
+  // Resolve actor refs to display names
+  obj.createdBy = resolveUserRef(this.created_by);
+  obj.updatedBy = resolveUserRef(this.updated_by);
+  obj.deletedBy = resolveUserRef(this.deleted_by);
+  return obj;
+};
+
 module.exports = User;
