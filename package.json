@@ -7,6 +7,8 @@
     "start":          "node server.js",
     "start:prod":     "NODE_ENV=production node server.js",
     "dev":            "nodemon server.js",
+    "debug": "node --inspect=9234 server.js",
+    "debug:dev": "nodemon --inspect=9234 server.js",
     "lint":           "eslint src/",
     "lint:fix":       "eslint src/ --fix",
     "test":           "jest --runInBand --forceExit",
