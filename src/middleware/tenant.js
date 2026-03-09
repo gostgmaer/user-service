@@ -1,20 +1,20 @@
 'use strict';
 
-const AppError = require('../utils/appError');
-
-const TENANCY_ENABLED   = process.env.TENANCY_ENABLED === 'true';
-const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID?.trim() || null;
+const TENANCY_ENABLED = process.env.TENANCY_ENABLED === "true";
+const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID?.trim() || "easydev";
 
 /**
  * Resolves req.tenantId from the x-tenant-id request header.
  *
- * TENANCY_ENABLED=true  + header present        → req.tenantId = header value
- * TENANCY_ENABLED=true  + no header, default set → req.tenantId = DEFAULT_TENANT_ID
- * TENANCY_ENABLED=true  + no header, no default  → 400 AppError
- * TENANCY_ENABLED=false + header present        → req.tenantId = header value
- * TENANCY_ENABLED=false + no header             → req.tenantId = null, continues
+ * Header present  → req.tenantId = header value
+ * Header missing  → req.tenantId = DEFAULT_TENANT_ID (or 'default')
  */
 function resolveTenantMiddleware(req, res, next) {
+  if (!TENANCY_ENABLED) {
+		req.tenantId = null;
+		return next();
+	}
+
   const tenantId = (req.headers['x-tenant-id'] || '').trim();
 
   if (tenantId) {
@@ -22,15 +22,12 @@ function resolveTenantMiddleware(req, res, next) {
     return next();
   }
 
-  if (TENANCY_ENABLED) {
-    if (DEFAULT_TENANT_ID) {
-      req.tenantId = DEFAULT_TENANT_ID;
-      return next();
-    }
-    return next(AppError.badRequest('Missing required header: x-tenant-id', 'MISSING_TENANT_ID'));
-  }
+  if (DEFAULT_TENANT_ID) {
+		req.tenantId = DEFAULT_TENANT_ID;
+		return next();
+	}
 
-  req.tenantId = null;
+  req.tenantId = "easydev";
   next();
 }
 
